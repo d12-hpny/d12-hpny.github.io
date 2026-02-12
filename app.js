@@ -10,6 +10,12 @@ const firebaseConfig = {
     appId: "1:123456789:web:abcdef"
 };
 
+// Constants
+const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+const MIN_SPINS = 5;
+const SPIN_VARIANCE = 3;
+const SPIN_DURATION_MS = 3000;
+
 // Initialize Firebase
 let app, auth, database, storage;
 let currentUser = null;
@@ -237,7 +243,7 @@ function loadEventSettings() {
                     budget: 1000,
                     prizes: defaultPrizes,
                     startTime: Date.now(),
-                    endTime: Date.now() + 7 * 24 * 60 * 60 * 1000 // 7 days from now
+                    endTime: Date.now() + 7 * MILLISECONDS_PER_DAY
                 };
             }
         });
@@ -251,7 +257,7 @@ function loadEventSettings() {
                 budget: 1000,
                 prizes: defaultPrizes,
                 startTime: Date.now(),
-                endTime: Date.now() + 7 * 24 * 60 * 60 * 1000
+                endTime: Date.now() + 7 * MILLISECONDS_PER_DAY
             };
         }
         drawWheel(eventSettings.prizes);
@@ -372,10 +378,10 @@ function spinWheel() {
     const prizeAngle = (2 * Math.PI / prizes.length) * randomIndex;
     
     // Calculate spins
-    const spins = 5 + Math.random() * 3; // 5-8 full rotations
+    const spins = MIN_SPINS + Math.random() * SPIN_VARIANCE; // 5-8 full rotations
     const targetRotation = spins * 2 * Math.PI + prizeAngle;
     
-    const duration = 3000; // 3 seconds
+    const duration = SPIN_DURATION_MS; // 3 seconds
     const startTime = Date.now();
     const startRotation = currentRotation;
     
