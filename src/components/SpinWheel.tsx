@@ -182,9 +182,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onFinish, prizes = DEFAULT_PRIZES
             // Let's find the nearest K * 360 that is > fakeTarget.
 
             // We need to ensure we don't reverse.
-            // Add a buffer of rotations.
             const spins = 5;
-            const baseRotation = rotation + 360 * spins;
             // We want to calculate the specific remainder.
 
             // The "remainder" of rotation needed is (270 - indexAngle). 
