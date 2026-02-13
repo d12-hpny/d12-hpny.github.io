@@ -51,9 +51,27 @@ npm run dev
 - **Styling**: Tailwind CSS
 - **Backend**: Supabase (PostgreSQL)
 - **Auth**: Google OAuth 2.0
-- **Deployment**: Vercel/Firebase Hosting
+- **Deployment**: GitHub Pages
+
+## 🚢 GitHub Pages Deployment
+
+### Bước 1: Thêm Secrets vào GitHub Repository
+Vào **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
+
+Thêm 3 secrets sau:
+- `VITE_GOOGLE_CLIENT_ID`: Google OAuth Client ID
+- `VITE_SUPABASE_URL`: URL của Supabase project (https://xxx.supabase.co)
+- `VITE_SUPABASE_ANON_KEY`: Anon key từ Supabase
+
+### Bước 2: Bật GitHub Pages
+Vào **Settings** → **Pages**:
+- **Source**: GitHub Actions
+
+### Bước 3: Deploy
+Push code lên branch `binhngo/2026` hoặc chạy workflow manually từ **Actions** tab
+
+⚠️ **Lưu ý**: Environment variables được inline vào code lúc BUILD, không cần config gì thêm ở runtime.
 
 ## 📝 License
-
 
 Private project for internal use.

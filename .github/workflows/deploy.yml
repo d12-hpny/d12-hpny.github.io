@@ -37,8 +37,11 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          # Đảm bảo base path đúng với tên repository
+          # Environment variables được inline vào code lúc build
           NODE_ENV: production
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
