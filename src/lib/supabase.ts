@@ -17,14 +17,22 @@ const DEFAULT_PRIZES_STRUCTURE = [
     { id: '500k', label: '500,000 VNĐ', stock: 0, color: '#FFFDD0', text: '#D2042D', probability: 0.1 },
 ];
 
-export const getUserState = async (email: string, userData: any) => {
+interface UserData {
+    name: string;
+    picture?: string;
+    email: string;
+}
+
+export const getUserState = async (email: string, userData: UserData) => {
     try {
         // 1. Check if user exists
-        let { data: user, error } = await supabase
+        const { data: fetchedUser, error } = await supabase
             .from('users')
             .select('*')
             .eq('email', email)
             .single();
+
+        let user = fetchedUser;
 
         if (error && error.code === 'PGRST116') {
             // User not found, create new
@@ -71,7 +79,7 @@ export const getUserState = async (email: string, userData: any) => {
 
             // Map current stock to default structure
             const mergedPrizes = newPrizes.map(defPrize => {
-                const existing = currentPrizes.find((p: any) => p.id === defPrize.id);
+                const existing = currentPrizes.find((p: { id: string }) => p.id === defPrize.id);
                 if (existing) {
                     return { ...defPrize, ...existing }; // Keep existing values (stock, etc.)
                 }

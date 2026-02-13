@@ -13,11 +13,19 @@ import { PendingSpinsAlert } from './components/PendingSpinsAlert';
 
 import { getUserState, getHostByCode, uploadPrizeClaim } from '@/lib/supabase';
 
+interface User {
+    email: string;
+    name: string;
+    picture?: string;
+    code?: string;
+    [key: string]: unknown;
+}
+
 function Game() {
     const { code } = useParams();
     const navigate = useNavigate();
-    const [user, setUser] = useState<any>(null);
-    const [host, setHost] = useState<any>(null);
+    const [user, setUser] = useState<User | null>(null);
+    const [host, setHost] = useState<User | null>(null);
     const [gameState, setGameState] = useState<'IDLE' | 'PLAYING' | 'CLAIMING' | 'FINISHED' | 'LOADING'>('LOADING');
     const [prize, setPrize] = useState<string>('');
     const [currentSpinId, setCurrentSpinId] = useState<string | null>(null);
@@ -74,7 +82,7 @@ function Game() {
         loadHostAndUser();
     }, [code]);
 
-    const handleLogin = async (userInfo: any) => {
+    const handleLogin = async (userInfo: User) => {
         // Optimistic update
         setUser(userInfo);
 

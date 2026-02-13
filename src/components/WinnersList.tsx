@@ -46,6 +46,7 @@ export function WinnersList({ wheelCode, refreshTrigger }: WinnersListProps) {
 
         const interval = setInterval(load, 10000);
         return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [wheelCode, refreshTrigger]);
 
     const handleOpenHistory = async () => {
@@ -70,7 +71,7 @@ export function WinnersList({ wheelCode, refreshTrigger }: WinnersListProps) {
         const currentIndex = sourceList.findIndex(w => w.id === selectedWinner.id);
         if (currentIndex === -1) return;
 
-        let newIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+        const newIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
 
         if (newIndex >= 0 && newIndex < sourceList.length) {
             setSelectedWinner(sourceList[newIndex]);

@@ -4,12 +4,23 @@ import { cn } from '@/lib/utils';
 import { Sparkles, Gift } from 'lucide-react';
 import { supabase, checkUserHasPlayed } from '@/lib/supabase';
 
+interface User {
+    email: string;
+    name: string;
+}
+
+interface HostSettings {
+    is_paused?: boolean;
+    start_time?: string;
+    end_time?: string;
+}
+
 interface SpinWheelProps {
     onFinish: (result: { label: string; spinId: string }) => void;
     prizes?: { id: string; label: string; color?: string; text?: string }[];
     wheelCode?: string;
-    user?: any; // Add user prop
-    hostSettings?: any; // Host settings including is_paused, start_time, end_time
+    user?: User;
+    hostSettings?: HostSettings;
 }
 
 const DEFAULT_PRIZES = [
@@ -182,7 +193,6 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onFinish, prizes = DEFAULT_PRIZES
             // Let's find the nearest K * 360 that is > fakeTarget.
 
             // We need to ensure we don't reverse.
-            const spins = 5;
             // We want to calculate the specific remainder.
 
             // The "remainder" of rotation needed is (270 - indexAngle). 
@@ -213,7 +223,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onFinish, prizes = DEFAULT_PRIZES
                 console.log("Spin ID:", data.spin_id);
             }, 5500); // slightly longer than transition
 
-        } catch (err: any) {
+        } catch (err) {
             console.error("Spin error:", err);
             // User-friendly error messages
             const errorMsg = err.message || "Vui lòng thử lại";

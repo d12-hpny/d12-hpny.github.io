@@ -13,8 +13,28 @@ import { Settings, Save } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { supabase } from "@/lib/supabase"
 
+interface Prize {
+    id: string;
+    label: string;
+    stock: number;
+    color: string;
+    text: string;
+    probability: number;
+}
+
+interface User {
+    email: string;
+    code?: string;
+    settings?: {
+        prizes?: Prize[];
+        is_paused?: boolean;
+        start_time?: string;
+        end_time?: string;
+    };
+}
+
 interface AdminModalProps {
-    user?: any;
+    user?: User;
 }
 
 const INITIAL_PRIZES = [
@@ -52,7 +72,7 @@ export function AdminModal({ user }: AdminModalProps) {
     }, [user]);
 
     const handleStockChange = (id: string, newStock: string) => {
-        setPrizes(prizes.map((p: any) => p.id === id ? { ...p, stock: parseInt(newStock) || 0 } : p));
+        setPrizes(prizes.map((p) => p.id === id ? { ...p, stock: parseInt(newStock) || 0 } : p));
     };
 
     const handleCreateCode = async () => {
@@ -240,7 +260,7 @@ export function AdminModal({ user }: AdminModalProps) {
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-sm font-medium">Cấu hình giải thưởng</h3>
                                 <div className="text-sm font-bold text-red-600 bg-red-50 px-3 py-1 rounded-full border border-red-100">
-                                    Tổng: {prizes.reduce((acc: number, p: any) => {
+                                    Tổng: {prizes.reduce((acc: number, p) => {
                                         let val = 0;
                                         if (p.id === '50k') val = 50000;
                                         if (p.id === '100k') val = 100000;
@@ -251,7 +271,7 @@ export function AdminModal({ user }: AdminModalProps) {
                                 </div>
                             </div>
                             <div className="grid gap-4 border rounded-lg p-4 bg-gray-50">
-                                {prizes.filter((p: any) => p.stock !== -1).map((prize: any) => (
+                                {prizes.filter((p) => p.stock !== -1).map((prize) => (
                                     <div key={prize.id} className="grid grid-cols-3 items-center gap-4">
                                         <Label htmlFor={prize.id} className="text-right col-span-1 font-bold text-gray-700">
                                             {prize.label}

@@ -1,13 +1,33 @@
 import { useState } from 'react';
 import { Button } from './ui/button';
 
+interface UserInfo {
+    email: string;
+    name: string;
+    picture?: string;
+}
+
 interface AuthProps {
-    onLogin: (user: any) => void;
+    onLogin: (user: UserInfo) => void;
+}
+
+interface GoogleTokenResponse {
+    access_token?: string;
 }
 
 declare global {
     interface Window {
-        google: any;
+        google?: {
+            accounts: {
+                oauth2: {
+                    initTokenClient: (config: {
+                        client_id: string;
+                        scope: string;
+                        callback: (response: GoogleTokenResponse) => void;
+                    }) => { requestAccessToken: () => void };
+                };
+            };
+        };
     }
 }
 
@@ -21,7 +41,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
             const client = window.google.accounts.oauth2.initTokenClient({
                 client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
                 scope: 'email profile openid',
-                callback: async (response: any) => {
+                callback: async (response: GoogleTokenResponse) => {
                     if (response.access_token) {
                         try {
                             const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
