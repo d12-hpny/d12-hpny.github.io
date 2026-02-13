@@ -13,12 +13,30 @@ import { PendingSpinsAlert } from './components/PendingSpinsAlert';
 
 import { getUserState, getHostByCode, uploadPrizeClaim } from '@/lib/supabase';
 
+interface Prize {
+    id: string;
+    label: string;
+    stock: number;
+    color: string;
+    text: string;
+    probability: number;
+}
+
+interface UserSettings {
+    prizes?: Prize[];
+    enabled?: boolean;
+    is_paused?: boolean;
+    start_time?: string;
+    end_time?: string;
+}
+
 interface User {
     email: string;
     name: string;
     picture?: string;
+    avatar_url?: string;
     code?: string;
-    [key: string]: unknown;
+    settings?: UserSettings;
 }
 
 function Game() {
@@ -43,18 +61,18 @@ function Game() {
                 // Refresh user data from Supabase to get 'code'
                 const dbUser = await getUserState(currentUser.email, currentUser);
                 if (dbUser) {
-                    currentUser = { ...currentUser, ...dbUser };
-                    setUser(currentUser);
+                    currentUser = { email: currentUser.email, ...currentUser, ...dbUser };
+                    setUser(currentUser as User);
                     localStorage.setItem('lixi_user', JSON.stringify(currentUser));
                 } else {
-                    setUser(currentUser);
+                    setUser(currentUser as User);
                 }
             }
 
             if (code) {
                 const hostData = await getHostByCode(code);
                 if (hostData) {
-                    setHost(hostData);
+                    setHost(hostData as User);
                     if (currentUser) {
                         setGameState('PLAYING');
                     } else {
@@ -82,14 +100,14 @@ function Game() {
         loadHostAndUser();
     }, [code]);
 
-    const handleLogin = async (userInfo: User) => {
+    const handleLogin = async (userInfo: { email: string; name: string; picture?: string }) => {
         // Optimistic update
-        setUser(userInfo);
+        setUser(userInfo as User);
 
         // Sync with Supabase (Upsert & Fetch)
         const dbUser = await getUserState(userInfo.email, userInfo);
 
-        let fullUser = userInfo;
+        let fullUser: User = { ...userInfo, email: userInfo.email };
         if (dbUser) {
             fullUser = { ...userInfo, ...dbUser };
             setUser(fullUser);
@@ -208,7 +226,7 @@ function Game() {
                             <div className="mb-6 bg-red-900/50 p-4 rounded-xl border border-yellow-500/30">
                                 <p className="text-yellow-200 text-sm">Vòng quay của</p>
                                 <h2 className="text-xl font-bold text-white mb-2">{host.name}</h2>
-                                {host.avatar_url && <img src={host.avatar_url} alt={host.name} className="w-12 h-12 rounded-full mx-auto border-2 border-yellow-400" />}
+                                {host.avatar_url && <img src={host.avatar_url as string} alt={host.name} className="w-12 h-12 rounded-full mx-auto border-2 border-yellow-400" />}
                             </div>
                         )}
 
@@ -224,9 +242,9 @@ function Game() {
                         {/* Pass host prizes if available */}
                         <SpinWheel
                             onFinish={handleSpinResult}
-                            prizes={host?.settings?.prizes?.length > 0 ? host.settings.prizes : undefined}
+                            prizes={host?.settings?.prizes && host.settings.prizes.length > 0 ? host.settings.prizes : undefined}
                             wheelCode={code}
-                            user={user}
+                            user={user ?? undefined}
                             hostSettings={host?.settings}
                         />
                         <WinnersList wheelCode={code || user?.code} />

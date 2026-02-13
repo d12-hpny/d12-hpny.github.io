@@ -8,13 +8,31 @@ import {
 import { Button } from "@/components/ui/button"
 import { Info } from "lucide-react"
 
+interface Prize {
+    id: string;
+    label: string;
+    stock: number;
+    color: string;
+    text: string;
+    probability: number;
+}
+
+interface UserSettings {
+    prizes?: Prize[];
+    enabled?: boolean;
+    is_paused?: boolean;
+    start_time?: string;
+    end_time?: string;
+}
+
 interface DebugModalProps {
     user?: {
         name: string;
         email: string;
         code?: string;
-        settings?: Record<string, unknown>;
-        [key: string]: unknown;
+        picture?: string;
+        avatar_url?: string;
+        settings?: UserSettings;
     };
 }
 

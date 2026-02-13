@@ -7,6 +7,8 @@ import { supabase, checkUserHasPlayed } from '@/lib/supabase';
 interface User {
     email: string;
     name: string;
+    avatar_url?: string;
+    picture?: string;
 }
 
 interface HostSettings {
@@ -226,7 +228,7 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onFinish, prizes = DEFAULT_PRIZES
         } catch (err) {
             console.error("Spin error:", err);
             // User-friendly error messages
-            const errorMsg = err.message || "Vui lòng thử lại";
+            const errorMsg = (err as Error).message || "Vui lòng thử lại";
             if (errorMsg.includes("tạm dừng") || errorMsg.includes("paused")) {
                 alert("⏸️ Vòng quay đang tạm dừng. Vui lòng chờ host mở lại!");
             } else if (errorMsg.includes("chưa bắt đầu")) {

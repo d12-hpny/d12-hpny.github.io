@@ -78,7 +78,7 @@ export function AdminModal({ user }: AdminModalProps) {
     const handleCreateCode = async () => {
         setIsLoading(true);
         try {
-            const { data, error } = await supabase.rpc('generate_wheel_code', { user_email: user.email });
+            const { data, error } = await supabase.rpc('generate_wheel_code', { user_email: user?.email });
             if (error) throw error;
             setWheelCode(data);
             alert(`Mã vòng quay đã được tạo: ${data}`);
@@ -115,7 +115,7 @@ export function AdminModal({ user }: AdminModalProps) {
             // 3. Call Supabase implementation to update user
             console.log("Saving to Supabase:", updates);
 
-            const { error } = await supabase.from('users').update(updates).eq('email', user.email);
+            const { error } = await supabase.from('users').update(updates).eq('email', user?.email || '');
 
             if (error) throw error;
 
