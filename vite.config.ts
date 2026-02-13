@@ -4,6 +4,9 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Base path - '/' cho root domain (username.github.io)
+  base: '/',
+  
   plugins: [react()],
   resolve: {
     alias: {
