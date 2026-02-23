@@ -221,8 +221,6 @@ const SpinWheel: React.FC<SpinWheelProps> = ({ onFinish, prizes = DEFAULT_PRIZES
             setTimeout(() => {
                 setSpinning(false);
                 onFinish({ label: wonPrize.label, spinId: data.spin_id });
-                // Can also use data.spin_id for uploading image later
-                console.log("Spin ID:", data.spin_id);
             }, 5500); // slightly longer than transition
 
         } catch (err) {

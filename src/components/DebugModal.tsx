@@ -77,7 +77,7 @@ export function DebugModal({ user }: DebugModalProps) {
                             <h3 className="text-sm font-medium mb-2">Wheel Info</h3>
                             <div className="text-sm text-gray-600 space-y-1">
                                 <p><strong>Wheel Code:</strong> {user.code}</p>
-                                <p><strong>Share Link:</strong> {window.location.origin}/{user.code}</p>
+                                <p><strong>Share Link:</strong> {window.location.origin}/#/{user.code}</p>
                                 <p><strong>Status:</strong> {user?.settings?.is_paused ? '⏸️ Paused' : '▶️ Active'}</p>
                             </div>
                         </div>

@@ -50,7 +50,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                             const userInfo = await userInfoResponse.json();
                             onLogin(userInfo);
                         } catch (error) {
-                            console.error("Error fetching user info:", error);
+                            alert('Không thể lấy thông tin người dùng. Vui lòng thử lại.');
                         } finally {
                             setLoading(false);
                         }
@@ -61,12 +61,9 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
             });
             client.requestAccessToken();
         } else {
-            // Fallback for dev without internet or script
-            console.warn("Google script not loaded, using mock login.");
-            setTimeout(() => {
-                onLogin({ name: "Dev User", email: "dev@company.com", picture: "" });
-                setLoading(false);
-            }, 1000);
+            // Google script not loaded
+            setLoading(false);
+            alert('Không thể tải Google Sign-In. Vui lòng kiểm tra kết nối mạng và thử lại.');
         }
     };
 

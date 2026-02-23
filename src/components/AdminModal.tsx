@@ -113,8 +113,6 @@ export function AdminModal({ user }: AdminModalProps) {
             };
 
             // 3. Call Supabase implementation to update user
-            console.log("Saving to Supabase:", updates);
-
             const { error } = await supabase.from('users').update(updates).eq('email', user?.email || '');
 
             if (error) throw error;
@@ -180,14 +178,33 @@ export function AdminModal({ user }: AdminModalProps) {
                                             size="sm"
                                             variant="outline"
                                             className="ml-2 h-8 w-8 p-0 border-yellow-300 text-yellow-700 hover:bg-yellow-100 rounded-full"
-                                            onClick={() => {
-                                                const link = `${window.location.origin}/${wheelCode}`;
-                                                navigator.clipboard.writeText(link);
-                                                alert(`Đã copy link: ${link}`);
+                                            onClick={async () => {
+                                                const link = `${window.location.origin}/#/${wheelCode}`;
+                                                
+                                                // Try Web Share API first (native share dialog)
+                                                if (navigator.share) {
+                                                    try {
+                                                        await navigator.share({
+                                                            title: 'Lì Xì Tết 2026 | VTI',
+                                                            text: 'Tham gia vòng quay Lì Xì may mắn!',
+                                                            url: link
+                                                        });
+                                                    } catch (err) {
+                                                        // User cancelled or error, fallback to copy
+                                                        if ((err as Error).name !== 'AbortError') {
+                                                            navigator.clipboard.writeText(link);
+                                                            alert(`Đã copy link: ${link}`);
+                                                        }
+                                                    }
+                                                } else {
+                                                    // Fallback: copy to clipboard
+                                                    navigator.clipboard.writeText(link);
+                                                    alert(`Đã copy link: ${link}`);
+                                                }
                                             }}
-                                            title="Copy Link Share"
+                                            title="Chia sẻ link"
                                         >
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-link"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
                                         </Button>
                                     </div>
                                 ) : (

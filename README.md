@@ -52,6 +52,15 @@ npm run dev
 - **Backend**: Supabase (PostgreSQL)
 - **Auth**: Google OAuth 2.0
 - **Deployment**: GitHub Pages
+- **Routing**: Hash Router (SPA-friendly cho GitHub Pages)
+
+## 🌐 URL Structure
+
+App sử dụng **Hash Router** để hỗ trợ routing trên GitHub Pages:
+- **Landing page**: `https://your-domain.github.io/`
+- **Wheel page**: `https://your-domain.github.io/#/WHEEL_CODE`
+
+Example: `https://d12-hpny.github.io/#/ABC123`
 
 ## 🚢 GitHub Pages Deployment
 
@@ -70,7 +79,9 @@ Vào **Settings** → **Pages**:
 ### Bước 3: Deploy
 Push code lên branch `binhngo/2026` hoặc chạy workflow manually từ **Actions** tab
 
-⚠️ **Lưu ý**: Environment variables được inline vào code lúc BUILD, không cần config gì thêm ở runtime.
+⚠️ **Lưu ý**: 
+- Environment variables được inline vào code lúc BUILD, không cần config gì thêm ở runtime.
+- URL sharing sẽ có format: `domain/#/wheel_code` (Hash Router)
 
 ## 📝 License
 
