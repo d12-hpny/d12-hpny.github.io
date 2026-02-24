@@ -1,5 +1,5 @@
 import Layout from './components/Layout';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Routes, Route, useParams, useNavigate } from 'react-router-dom';
 import Auth from './components/Auth';
 import SpinWheel from './components/SpinWheel';
@@ -10,129 +10,30 @@ import { AdminModal } from './components/AdminModal';
 import { DebugModal } from './components/DebugModal';
 import { WinnersList } from './components/WinnersList';
 import { PendingSpinsAlert } from './components/PendingSpinsAlert';
+import { toast } from 'sonner';
 
-import { getUserState, getHostByCode, uploadPrizeClaim } from '@/lib/supabase';
-
-interface Prize {
-    id: string;
-    label: string;
-    stock: number;
-    color: string;
-    text: string;
-    probability: number;
-}
-
-interface UserSettings {
-    prizes?: Prize[];
-    enabled?: boolean;
-    is_paused?: boolean;
-    start_time?: string;
-    end_time?: string;
-}
-
-interface User {
-    email: string;
-    name: string;
-    picture?: string;
-    avatar_url?: string;
-    code?: string;
-    settings?: UserSettings;
-}
+import { uploadPrizeClaim } from '@/lib/supabase';
+import { useAppState } from '@/hooks/useAppState';
 
 function Game() {
     const { code } = useParams();
     const navigate = useNavigate();
-    const [user, setUser] = useState<User | null>(null);
-    const [host, setHost] = useState<User | null>(null);
-    const [gameState, setGameState] = useState<'IDLE' | 'PLAYING' | 'CLAIMING' | 'FINISHED' | 'LOADING'>('LOADING');
+    const {
+        user,
+        host,
+        gameState,
+        setGameState,
+        error,
+        showPendingAlert,
+        setShowPendingAlert,
+        handleLogout: hookHandleLogout,
+    } = useAppState(code);
+
     const [prize, setPrize] = useState<string>('');
     const [currentSpinId, setCurrentSpinId] = useState<string | null>(null);
-    const [error, setError] = useState<string>('');
-    const [showPendingAlert, setShowPendingAlert] = useState(false);
 
-    // Load Host Data if code is present
-    useEffect(() => {
-        const loadHostAndUser = async () => {
-            // Check if current user is logged in
-            const storedUser = localStorage.getItem('lixi_user');
-            let currentUser = null;
-            if (storedUser) {
-                currentUser = JSON.parse(storedUser);
-                // Refresh user data from Supabase to get 'code'
-                const dbUser = await getUserState(currentUser.email, currentUser);
-                if (dbUser) {
-                    currentUser = { email: currentUser.email, ...currentUser, ...dbUser };
-                    setUser(currentUser as User);
-                    localStorage.setItem('lixi_user', JSON.stringify(currentUser));
-                } else {
-                    setUser(currentUser as User);
-                }
-            }
-
-            if (code) {
-                const hostData = await getHostByCode(code);
-                if (hostData) {
-                    setHost(hostData as User);
-                    if (currentUser) {
-                        setGameState('PLAYING');
-                    } else {
-                        setGameState('IDLE');
-                    }
-                } else {
-                    setError('Mã vòng quay không hợp lệ hoặc không tồn tại.');
-                    setGameState('IDLE');
-                }
-            } else {
-                // Landing page mode (Admin/Create)
-                if (currentUser) {
-                    // If user has a code but is at root, maybe we should redirect or just let them play their own?
-                    // For now, allow them to manage/play.
-                    setGameState('PLAYING');
-                    // Check for pending spins after a short delay (for returning users)
-                    setTimeout(() => {
-                        setShowPendingAlert(true);
-                    }, 1500);
-                } else {
-                    setGameState('IDLE');
-                }
-            }
-        };
-        loadHostAndUser();
-    }, [code]);
-
-    const handleLogin = async (userInfo: { email: string; name: string; picture?: string }) => {
-        // Optimistic update
-        setUser(userInfo as User);
-
-        // Sync with Supabase (Upsert & Fetch)
-        const dbUser = await getUserState(userInfo.email, userInfo);
-
-        let fullUser: User = { ...userInfo, email: userInfo.email };
-        if (dbUser) {
-            fullUser = { ...userInfo, ...dbUser };
-            setUser(fullUser);
-        }
-        localStorage.setItem('lixi_user', JSON.stringify(fullUser));
-
-        if (code) {
-            // Playing someone else's game
-            // Check has_played logic here if needed
-            setGameState('PLAYING');
-        } else {
-            // Landing page - logged in
-            setGameState('PLAYING');
-        }
-
-        // Check for pending spins after a short delay
-        setTimeout(() => {
-            setShowPendingAlert(true);
-        }, 1000);
-    };
-
-    const handleLogout = () => {
-        setUser(null);
-        setGameState('IDLE');
-        localStorage.removeItem('lixi_user');
+    const handleLogout = async () => {
+        await hookHandleLogout();
         navigate('/');
     };
 
@@ -154,7 +55,7 @@ function Game() {
             setGameState('FINISHED');
         } catch (error) {
             console.error("Failed to upload claim:", error);
-            alert("Có lỗi khi tải ảnh lên. Vui lòng thử lại.");
+            toast.error("Có lỗi khi tải ảnh lên. Vui lòng thử lại.");
         }
     };
 
@@ -193,10 +94,16 @@ function Game() {
                         </div>
                         <span className="text-white font-medium hidden md:inline">{user.name}</span>
 
-                        {/* Only show AdminModal if NO code (Landing) or if User matches Host (Owner) */}
-                        {/* Simplified: Always show AdminModal, but maybe restrict features? For now allow all for simplicity/MVP */}
-                        <AdminModal user={user} />
-                        <DebugModal user={user} />
+                        {/* Show AdminModal if:
+                            1. No code in URL (Landing Page) -> Show for any logged in user to manage their own settings
+                            2. OR User's code matches the URL code (Owner viewing their own wheel)
+                        */}
+                        {(!code || (code && user.code === code)) && (
+                            <>
+                                <AdminModal user={user} />
+                                <DebugModal user={user} />
+                            </>
+                        )}
 
                         <Button
                             variant="ghost"
@@ -232,12 +139,12 @@ function Game() {
 
                         <div className="bg-white/90 rounded-2xl p-6 shadow-inner mb-6">
                             <p className="text-gray-600 mb-4">Đăng nhập tài khoản Google để tham gia quay thưởng</p>
-                            <Auth onLogin={handleLogin} />
+                            <Auth />
                         </div>
                     </div>
                 )}
 
-                {gameState === 'PLAYING' && (
+                {gameState === 'PLAYING' && (code || (user && user.code)) && (
                     <div className="z-10 animate-in fade-in slide-in-from-bottom-10 duration-500 flex flex-col items-center w-full">
                         {/* Pass host prizes if available */}
                         <SpinWheel
@@ -247,14 +154,29 @@ function Game() {
                             user={user ?? undefined}
                             hostSettings={host?.settings}
                         />
-                        <WinnersList wheelCode={code || user?.code} />
+                        <WinnersList
+                            wheelCode={code || user?.code}
+                            currentUserEmail={user?.email}
+                        />
+                    </div>
+                )}
+
+                {gameState === 'PLAYING' && !code && (!user || !user.code) && (
+                    <div className="z-10 bg-white/10 backdrop-blur-md p-8 md:p-12 rounded-3xl border border-white/20 shadow-2xl text-center max-w-lg mx-4">
+                        <h1 className="text-3xl md:text-5xl font-bold text-yellow-400 drop-shadow-[0_4px_4px_rgba(0,0,0,0.5)] mb-4 font-festive">
+                            Chào mừng, {user?.name}!
+                        </h1>
+                        <p className="text-white text-lg mb-6">
+                            Bạn chưa có vòng quay nào đang hoạt động.<br />
+                            Vui lòng nhấn vào biểu tượng <strong>Cài đặt</strong> (⚙️) ở góc trên bên phải để tạo vòng quay mới!
+                        </p>
                     </div>
                 )}
 
                 {gameState === 'CLAIMING' && (
                     <div className="z-20 fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-                        <PrizeClaim 
-                            prize={prize} 
+                        <PrizeClaim
+                            prize={prize}
                             onClaim={handleClaim}
                             onSkip={handleSkipClaim}
                         />
@@ -276,8 +198,8 @@ function Game() {
 
                 {/* Pending Spins Alert */}
                 {showPendingAlert && user && (
-                    <PendingSpinsAlert 
-                        userEmail={user.email} 
+                    <PendingSpinsAlert
+                        userEmail={user.email}
                         onClose={() => setShowPendingAlert(false)}
                     />
                 )}

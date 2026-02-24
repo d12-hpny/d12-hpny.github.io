@@ -178,6 +178,8 @@ export const uploadPrizeClaim = async (file: File, spinId: string) => {
 
 // API to update spin status (delivered/claimed/pending)
 export const updateSpinStatus = async (spinId: string, status: 'pending' | 'claimed' | 'delivered') => {
+    if (!spinId) throw new Error("Missing spinId");
+
     try {
         const { error } = await supabase
             .from('spins')

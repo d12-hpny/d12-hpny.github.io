@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Settings, Save } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { supabase } from "@/lib/supabase"
+import { toast } from 'sonner'
 
 interface Prize {
     id: string;
@@ -81,10 +82,10 @@ export function AdminModal({ user }: AdminModalProps) {
             const { data, error } = await supabase.rpc('generate_wheel_code', { user_email: user?.email });
             if (error) throw error;
             setWheelCode(data);
-            alert(`Mã vòng quay đã được tạo: ${data}`);
+            toast.success(`Mã vòng quay đã được tạo: ${data}`);
         } catch (error) {
             console.error("Error generating code:", error);
-            alert("Lỗi khi tạo mã. Vui lòng thử lại.");
+            toast.error("Lỗi khi tạo mã. Vui lòng thử lại.");
         } finally {
             setIsLoading(false);
         }
@@ -93,10 +94,9 @@ export function AdminModal({ user }: AdminModalProps) {
     const handleSave = async () => {
         setIsLoading(true);
         try {
-            // 1. Ensure code exists
-            const codeToSave = wheelCode;
-            if (!codeToSave) {
-                alert("Vui lòng tạo mã vòng quay trước!");
+            // 1. Guard against unauthorized saves if a code exists
+            if (wheelCode && user?.code && user.code !== wheelCode) {
+                toast.error("Bạn không có quyền thay đổi cài đặt của vòng quay này.");
                 setIsLoading(false);
                 return;
             }
@@ -117,10 +117,10 @@ export function AdminModal({ user }: AdminModalProps) {
 
             if (error) throw error;
 
-            alert(`Đã lưu! Mã vòng quay của bạn: ${codeToSave}`);
+            toast.success(`Đã lưu! Mã vòng quay của bạn: ${wheelCode}`);
         } catch (error) {
             console.error("Error saving settings:", error);
-            alert("Có lỗi xảy ra khi lưu cài đặt.");
+            toast.error("Có lỗi xảy ra khi lưu cài đặt.");
         } finally {
             setIsLoading(false);
         }
@@ -145,43 +145,48 @@ export function AdminModal({ user }: AdminModalProps) {
                     </TabsList>
 
                     <TabsContent value="general" className="flex-1 overflow-y-auto pr-2">
-                        <div className="space-y-3 py-3">
-                            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                                <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <h3 className="text-sm font-bold text-yellow-800 uppercase">Trạng thái vòng quay</h3>
-                                        {!wheelCode && (
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                className="h-6 px-2 text-xs border-yellow-300 text-yellow-700 hover:bg-yellow-100"
-                                                onClick={handleCreateCode}
-                                            >
-                                                Create
-                                            </Button>
-                                        )}
+                        <div className="space-y-4 py-3">
+                            {/* State 1: Not Created */}
+                            {!wheelCode ? (
+                                <div className="flex flex-col items-center justify-center p-8 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl text-center space-y-4">
+                                    <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-2">
+                                        <Settings className="w-8 h-8 text-gray-400" />
                                     </div>
-                                    {wheelCode ? (
-                                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-bold">Đang hoạt động</span>
-                                    ) : (
-                                        <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">Chưa kích hoạt</span>
-                                    )}
+                                    <div>
+                                        <h3 className="text-lg font-bold text-gray-800">Chưa có vòng quay nào</h3>
+                                        <p className="text-sm text-gray-500 mt-1 max-w-xs mx-auto">
+                                            Bạn cần tạo một vòng quay mới để bắt đầu chương trình Lì Xì.
+                                        </p>
+                                    </div>
+                                    <Button
+                                        onClick={handleCreateCode}
+                                        disabled={isLoading}
+                                        className="bg-red-600 hover:bg-red-700 text-white px-8 h-12 shadow-lg hover:shadow-xl transition-all font-bold text-lg mt-4"
+                                    >
+                                        TẠO VÒNG QUAY NGAY
+                                    </Button>
                                 </div>
-
-                                {wheelCode ? (
-                                    <div className="flex items-center gap-2">
-                                        <div className="text-sm text-gray-600">Mã tham gia:</div>
-                                        <div className="font-mono text-xl font-bold text-red-600 tracking-wider bg-white px-3 py-1 rounded border border-red-100">
-                                            {wheelCode}
+                            ) : (
+                                /* State 2: Created / Activated */
+                                <div className="space-y-4">
+                                    <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                                        <div>
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                                                <span className="text-sm font-bold text-green-800 uppercase">Trạng thái: Đang hoạt động</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 mt-2">
+                                                <span className="text-gray-600 text-sm">Mã tham gia:</span>
+                                                <span className="font-mono text-xl font-bold text-red-600 tracking-wider bg-white px-3 py-1 rounded border border-red-100 shadow-sm">
+                                                    {wheelCode}
+                                                </span>
+                                            </div>
                                         </div>
                                         <Button
-                                            size="sm"
                                             variant="outline"
-                                            className="ml-2 h-8 w-8 p-0 border-yellow-300 text-yellow-700 hover:bg-yellow-100 rounded-full"
+                                            className="border-green-300 text-green-700 hover:bg-green-100 bg-white"
                                             onClick={async () => {
                                                 const link = `${window.location.origin}/#/${wheelCode}`;
-                                                
-                                                // Try Web Share API first (native share dialog)
                                                 if (navigator.share) {
                                                     try {
                                                         await navigator.share({
@@ -190,85 +195,81 @@ export function AdminModal({ user }: AdminModalProps) {
                                                             url: link
                                                         });
                                                     } catch (err) {
-                                                        // User cancelled or error, fallback to copy
                                                         if ((err as Error).name !== 'AbortError') {
                                                             navigator.clipboard.writeText(link);
-                                                            alert(`Đã copy link: ${link}`);
+                                                            toast.success(`Đã copy link: ${link}`);
                                                         }
                                                     }
                                                 } else {
-                                                    // Fallback: copy to clipboard
                                                     navigator.clipboard.writeText(link);
-                                                    alert(`Đã copy link: ${link}`);
+                                                    toast.success(`Đã copy link: ${link}`);
                                                 }
                                             }}
-                                            title="Chia sẻ link"
                                         >
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><polyline points="16 6 12 2 8 6" /><line x1="12" x2="12" y1="2" y2="15" /></svg>
+                                            Chia sẻ link vòng quay
                                         </Button>
                                     </div>
-                                ) : (
-                                    <p className="text-sm text-gray-600">
-                                        Bấm <b>Create</b> để tạo mã vòng quay ngẫu nhiên.
-                                    </p>
-                                )}
-                            </div>
 
-                            {wheelCode && (
-                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                                    <h3 className="text-sm font-bold text-blue-800 uppercase mb-2">Điều khiển vòng quay</h3>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <Label className="text-sm font-medium">Tạm dừng vòng quay</Label>
-                                        <button
-                                            type="button"
-                                            role="switch"
-                                            aria-checked={isPaused}
-                                            onClick={() => setIsPaused(!isPaused)}
-                                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                                                isPaused ? 'bg-red-600' : 'bg-green-600'
-                                            }`}
-                                        >
-                                            <span
-                                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                                                    isPaused ? 'translate-x-6' : 'translate-x-1'
-                                                }`}
-                                            />
-                                        </button>
+                                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                                        <div className="flex items-start justify-between">
+                                            <div>
+                                                <h3 className="text-sm font-bold text-blue-900 uppercase mb-1">Tạm dừng vòng quay</h3>
+                                                <p className="text-xs text-blue-700/80 max-w-sm">
+                                                    Bật tính năng này để tạm khóa vòng quay khi bạn muốn sửa đổi danh sách giải thưởng hoặc tạm nghỉ. Người chơi sẽ thấy thông báo "Đang tạm dừng".
+                                                </p>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                role="switch"
+                                                aria-checked={isPaused}
+                                                onClick={() => setIsPaused(!isPaused)}
+                                                className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${isPaused ? 'bg-red-500' : 'bg-blue-500'}`}
+                                            >
+                                                <span className="sr-only">Tạm dừng</span>
+                                                <span
+                                                    aria-hidden="true"
+                                                    className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isPaused ? 'translate-x-5' : 'translate-x-0'}`}
+                                                />
+                                            </button>
+                                        </div>
+                                        {isPaused && (
+                                            <div className="mt-3 text-sm text-red-600 font-medium flex items-center gap-2 bg-red-100/50 p-2 rounded-lg border border-red-200">
+                                                <span>⏸️</span> Vòng quay hiện đang bị khóa. Người chơi không thể quay lúc này.
+                                            </div>
+                                        )}
                                     </div>
-                                    <p className="text-xs text-gray-600">
-                                        {isPaused ? '⏸️ Đã tạm dừng - Không ai có thể quay' : '▶️ Đang hoạt động - Mọi người có thể quay'}
-                                    </p>
+
+                                    <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+                                        <h3 className="text-sm font-bold text-purple-900 uppercase mb-3">Thời gian sự kiện</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-1.5">
+                                                <Label htmlFor="start_time" className="text-xs font-bold text-purple-800">Thời gian bắt đầu</Label>
+                                                <Input
+                                                    id="start_time"
+                                                    type="datetime-local"
+                                                    value={startTime}
+                                                    onChange={(e) => setStartTime(e.target.value)}
+                                                    className="w-full text-sm bg-white border-purple-200 focus:ring-purple-500"
+                                                />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <Label htmlFor="end_time" className="text-xs font-bold text-purple-800">Thời gian kết thúc</Label>
+                                                <Input
+                                                    id="end_time"
+                                                    type="datetime-local"
+                                                    value={endTime}
+                                                    onChange={(e) => setEndTime(e.target.value)}
+                                                    className="w-full text-sm bg-white border-purple-200 focus:ring-purple-500"
+                                                />
+                                            </div>
+                                        </div>
+                                        <p className="text-xs text-purple-600 mt-3 flex items-center gap-1.5">
+                                            💡 <span className="italic">Gợi ý: Nếu để trống cả hai ô, vòng quay sẽ hoạt động mãi mãi miễn là không bị Tạm dừng.</span>
+                                        </p>
+                                    </div>
                                 </div>
                             )}
-
-                            <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-                                <h3 className="text-sm font-bold text-purple-800 uppercase mb-2">Thời gian sự kiện</h3>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <Label htmlFor="start_time" className="text-xs font-medium mb-1 block">Bắt đầu</Label>
-                                        <Input
-                                            id="start_time"
-                                            type="datetime-local"
-                                            value={startTime}
-                                            onChange={(e) => setStartTime(e.target.value)}
-                                            className="w-full text-sm"
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="end_time" className="text-xs font-medium mb-1 block">Kết thúc</Label>
-                                        <Input
-                                            id="end_time"
-                                            type="datetime-local"
-                                            value={endTime}
-                                            onChange={(e) => setEndTime(e.target.value)}
-                                            className="w-full text-sm"
-                                        />
-                                    </div>
-                                </div>
-                                <p className="text-xs text-gray-600 mt-2">
-                                    💡 Để trống nếu không giới hạn thời gian
-                                </p>
-                            </div>
                         </div>
                     </TabsContent>
 

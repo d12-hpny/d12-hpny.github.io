@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Upload, AlertCircle, CheckCircle, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getUserPendingSpins, uploadPrizeClaim } from '@/lib/supabase';
+import { toast } from 'sonner';
 
 interface PendingSpin {
     id: string;
@@ -69,7 +70,7 @@ export function PendingSpinsAlert({ userEmail, onClose }: PendingSpinsAlertProps
             }
         } catch (error) {
             console.error('Upload error:', error);
-            alert('Có lỗi khi tải ảnh lên. Vui lòng thử lại!');
+            toast.error('Có lỗi khi tải ảnh lên. Vui lòng thử lại!');
         } finally {
             setIsUploading(false);
         }

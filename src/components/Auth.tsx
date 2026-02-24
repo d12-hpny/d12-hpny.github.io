@@ -1,69 +1,27 @@
 import { useState } from 'react';
 import { Button } from './ui/button';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 
-interface UserInfo {
-    email: string;
-    name: string;
-    picture?: string;
-}
-
-interface AuthProps {
-    onLogin: (user: UserInfo) => void;
-}
-
-interface GoogleTokenResponse {
-    access_token?: string;
-}
-
-declare global {
-    interface Window {
-        google?: {
-            accounts: {
-                oauth2: {
-                    initTokenClient: (config: {
-                        client_id: string;
-                        scope: string;
-                        callback: (response: GoogleTokenResponse) => void;
-                    }) => { requestAccessToken: () => void };
-                };
-            };
-        };
-    }
-}
-
-const Auth: React.FC<AuthProps> = ({ onLogin }) => {
+const Auth = () => {
     const [loading, setLoading] = useState(false);
 
-    const handleGoogleLogin = () => {
+    const handleGoogleLogin = async () => {
         setLoading(true);
-
-        if (window.google) {
-            const client = window.google.accounts.oauth2.initTokenClient({
-                client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-                scope: 'email profile openid',
-                callback: async (response: GoogleTokenResponse) => {
-                    if (response.access_token) {
-                        try {
-                            const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                                headers: { Authorization: `Bearer ${response.access_token}` },
-                            });
-                            const userInfo = await userInfoResponse.json();
-                            onLogin(userInfo);
-                        } catch (error) {
-                            alert('Không thể lấy thông tin người dùng. Vui lòng thử lại.');
-                        } finally {
-                            setLoading(false);
-                        }
-                    } else {
-                        setLoading(false);
-                    }
-                },
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    // Redirect to the current URL so the code/wheel context is preserved
+                    redirectTo: window.location.href
+                }
             });
-            client.requestAccessToken();
-        } else {
-            // Google script not loaded
+            if (error) throw error;
+        } catch (error) {
+            console.error('Error logging in:', error);
+            toast.error('Không thể tải đăng nhập. Vui lòng thử lại.');
+        } finally {
             setLoading(false);
-            alert('Không thể tải Google Sign-In. Vui lòng kiểm tra kết nối mạng và thử lại.');
         }
     };
 

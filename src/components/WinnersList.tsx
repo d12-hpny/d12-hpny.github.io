@@ -1,9 +1,10 @@
 
 import { useEffect, useState } from 'react';
 import { Trophy, QrCode, ChevronLeft, ChevronRight, Check, X } from 'lucide-react';
-import { getRecentWinners, updateSpinStatus } from '@/lib/supabase';
+import { getRecentWinners, updateSpinStatus, supabase } from '@/lib/supabase';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 
 interface Winner {
@@ -20,15 +21,32 @@ interface Winner {
 interface WinnersListProps {
     wheelCode?: string;
     refreshTrigger?: number;
+    currentUserEmail?: string;
 }
 
-export function WinnersList({ wheelCode, refreshTrigger }: WinnersListProps) {
+export function WinnersList({ wheelCode, refreshTrigger, currentUserEmail }: WinnersListProps) {
     const [winners, setWinners] = useState<Winner[]>([]);
     const [selectedWinner, setSelectedWinner] = useState<Winner | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [allWinners, setAllWinners] = useState<Winner[]>([]); // For history view
     const [isUpdating, setIsUpdating] = useState(false);
+    const [isHost, setIsHost] = useState(false);
+
+    useEffect(() => {
+        const checkHostStatus = async () => {
+            if (currentUserEmail && wheelCode) {
+                const { data } = await supabase
+                    .from('users')
+                    .select('email')
+                    .eq('code', wheelCode)
+                    .single();
+
+                setIsHost(data?.email === currentUserEmail);
+            }
+        };
+        checkHostStatus();
+    }, [currentUserEmail, wheelCode]);
 
     const fetchWinners = async (limit = 20) => {
         const data = await getRecentWinners(wheelCode, limit);
@@ -46,7 +64,7 @@ export function WinnersList({ wheelCode, refreshTrigger }: WinnersListProps) {
 
         const interval = setInterval(load, 10000);
         return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [wheelCode, refreshTrigger]);
 
     const handleOpenHistory = async () => {
@@ -79,25 +97,25 @@ export function WinnersList({ wheelCode, refreshTrigger }: WinnersListProps) {
     };
 
     const handleToggleStatus = async () => {
-        if (!selectedWinner || isUpdating) return;
-        
+        if (!selectedWinner || isUpdating || !isHost) return;
+
         setIsUpdating(true);
         try {
             const currentStatus = selectedWinner.status || 'pending';
             const newStatus: 'pending' | 'delivered' = currentStatus === 'delivered' ? 'pending' : 'delivered';
-            
+
             await updateSpinStatus(selectedWinner.id, newStatus);
-            
+
             // Update local state
             const updatedWinner: Winner = { ...selectedWinner, status: newStatus };
             setSelectedWinner(updatedWinner);
-            
+
             // Update in winners list
             setWinners(prev => prev.map(w => w.id === selectedWinner.id ? updatedWinner : w));
             setAllWinners(prev => prev.map(w => w.id === selectedWinner.id ? updatedWinner : w));
         } catch (error) {
             console.error('Error updating status:', error);
-            alert('Có lỗi khi cập nhật trạng thái!');
+            toast.error('Có lỗi khi cập nhật trạng thái!');
         } finally {
             setIsUpdating(false);
         }
@@ -128,31 +146,32 @@ export function WinnersList({ wheelCode, refreshTrigger }: WinnersListProps) {
                     <div className="text-xs text-gray-400">
                         {new Date(winner.created_at).toLocaleString('vi-VN')}
                     </div>
-                    
-                    {/* Status Toggle Button */}
-                    <Button
-                        onClick={handleToggleStatus}
-                        disabled={isUpdating}
-                        size="sm"
-                        className={`gap-2 ${
-                            winner.status === 'delivered' 
-                                ? 'bg-green-600 hover:bg-green-700' 
+
+                    {/* Status Toggle Button - Only for Host */}
+                    {isHost && (
+                        <Button
+                            onClick={handleToggleStatus}
+                            disabled={isUpdating}
+                            size="sm"
+                            className={`gap-2 ${winner.status === 'delivered'
+                                ? 'bg-green-600 hover:bg-green-700'
                                 : 'bg-gray-400 hover:bg-gray-500'
-                        }`}
-                    >
-                        {winner.status === 'delivered' ? (
-                            <>
-                                <Check className="w-4 h-4" />
-                                Đã nhận giải
-                            </>
-                        ) : (
-                            <>
-                                <X className="w-4 h-4" />
-                                Chưa nhận
-                            </>
-                        )}
-                    </Button>
-                    
+                                }`}
+                        >
+                            {winner.status === 'delivered' ? (
+                                <>
+                                    <Check className="w-4 h-4" />
+                                    Đã nhận giải
+                                </>
+                            ) : (
+                                <>
+                                    <X className="w-4 h-4" />
+                                    Chưa nhận
+                                </>
+                            )}
+                        </Button>
+                    )}
+
                     {winner.image_url && (
                         <span className="text-xs text-green-600 font-medium">
                             ✓ Đã upload QR
