@@ -1,11 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -245,23 +239,29 @@ export function AdminModal({ user }: AdminModalProps) {
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className="space-y-1.5">
                                                 <Label htmlFor="start_time" className="text-xs font-bold text-purple-800">Thời gian bắt đầu</Label>
-                                                <Input
-                                                    id="start_time"
-                                                    type="datetime-local"
-                                                    value={startTime}
-                                                    onChange={(e) => setStartTime(e.target.value)}
-                                                    className="w-full text-sm bg-white border-purple-200 focus:ring-purple-500"
-                                                />
+                                                <div className="relative">
+                                                    <Input
+                                                        id="start_time"
+                                                        type="datetime-local"
+                                                        step="300"
+                                                        value={startTime}
+                                                        onChange={(e) => setStartTime(e.target.value)}
+                                                        className="w-full pl-3 pr-4 py-2.5 text-sm bg-white border-purple-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 rounded-lg shadow-sm transition-all text-gray-700 font-medium hover:border-purple-300 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-60 hover:[&::-webkit-calendar-picker-indicator]:opacity-100"
+                                                    />
+                                                </div>
                                             </div>
                                             <div className="space-y-1.5">
                                                 <Label htmlFor="end_time" className="text-xs font-bold text-purple-800">Thời gian kết thúc</Label>
-                                                <Input
-                                                    id="end_time"
-                                                    type="datetime-local"
-                                                    value={endTime}
-                                                    onChange={(e) => setEndTime(e.target.value)}
-                                                    className="w-full text-sm bg-white border-purple-200 focus:ring-purple-500"
-                                                />
+                                                <div className="relative">
+                                                    <Input
+                                                        id="end_time"
+                                                        type="datetime-local"
+                                                        step="300"
+                                                        value={endTime}
+                                                        onChange={(e) => setEndTime(e.target.value)}
+                                                        className="w-full pl-3 pr-4 py-2.5 text-sm bg-white border-purple-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 rounded-lg shadow-sm transition-all text-gray-700 font-medium hover:border-purple-300 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-60 hover:[&::-webkit-calendar-picker-indicator]:opacity-100"
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                         <p className="text-xs text-purple-600 mt-3 flex items-center gap-1.5">
@@ -300,9 +300,9 @@ export function AdminModal({ user }: AdminModalProps) {
                                                 type="number"
                                                 value={prize.stock}
                                                 onChange={(e) => handleStockChange(prize.id, e.target.value)}
-                                                className="w-24 border-gray-300"
+                                                className="w-24 border-gray-300 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500 text-center font-bold text-gray-800 transition-all shadow-sm"
                                             />
-                                            <span className="text-xs text-gray-500">lượt</span>
+                                            <span className="text-xs text-gray-500 font-medium bg-white px-2 py-1 rounded shadow-sm border border-gray-100">lượt</span>
                                         </div>
                                     </div>
                                 ))}
