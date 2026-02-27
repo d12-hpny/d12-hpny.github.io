@@ -101,7 +101,7 @@ function Game() {
                         {(!code || (code && user.code === code)) && (
                             <>
                                 <AdminModal user={user} />
-                                <DebugModal user={user} />
+                                {import.meta.env.DEV && <DebugModal user={user} />}
                             </>
                         )}
 
