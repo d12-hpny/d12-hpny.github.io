@@ -36,7 +36,6 @@ export const getUserState = async (email: string, userData: UserData) => {
 
         if (error && error.code === 'PGRST116') {
             // User not found, create new
-            console.log("Creating new user:", email);
             const { data: newUser, error: createError } = await supabase
                 .from('users')
                 .insert([{
@@ -140,9 +139,27 @@ export const getPrizes = async () => {
 };
 
 // API to upload Prize Claim image
+const ALLOWED_IMAGE_MIME_TYPES: Record<string, string> = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+    'image/gif': 'gif',
+};
+const MAX_UPLOAD_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+
 export const uploadPrizeClaim = async (file: File, spinId: string) => {
     try {
-        const fileExt = file.name.split('.').pop();
+        // Validate MIME type
+        const fileExt = ALLOWED_IMAGE_MIME_TYPES[file.type];
+        if (!fileExt) {
+            throw new Error('Loại file không hợp lệ. Chỉ chấp nhận JPG, PNG, WebP, GIF.');
+        }
+
+        // Validate file size
+        if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+            throw new Error('Ảnh không được vượt quá 5MB.');
+        }
+
         const fileName = `${spinId}/${Date.now()}.${fileExt}`;
         const filePath = `${fileName}`;
 

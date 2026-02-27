@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Upload, CheckCircle, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
+
+const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 interface PrizeClaimProps {
     prize: string;
@@ -17,6 +21,19 @@ const PrizeClaim: React.FC<PrizeClaimProps> = ({ prize, onClaim, onSkip }) => {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const selectedFile = e.target.files[0];
+
+            if (!ALLOWED_MIME_TYPES.includes(selectedFile.type)) {
+                toast.error('Chỉ chấp nhận file ảnh (JPG, PNG, WebP, GIF).');
+                e.target.value = '';
+                return;
+            }
+
+            if (selectedFile.size > MAX_FILE_SIZE_BYTES) {
+                toast.error('Ảnh không được vượt quá 5MB.');
+                e.target.value = '';
+                return;
+            }
+
             setFile(selectedFile);
             setPreview(URL.createObjectURL(selectedFile));
         }
